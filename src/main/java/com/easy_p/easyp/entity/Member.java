@@ -21,4 +21,20 @@ public class Member extends BaseEntity {
     private String name;
     private String password;
     private String role;
+    private String profile;
+
+    public Member(String email, String name, String role, String profile){
+        this.email=email;
+        this.name=name;
+        this.role=role;
+        this.profile = profile;
+    }
+
+    public Member(String email, String name, String role, String password, String profile){
+        this.email = email;
+        this.name = name;
+        this.role = role;
+        this.password = password;
+        this.profile = profile;
+    }
 }
