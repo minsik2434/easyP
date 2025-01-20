@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: easyP
+  config:
+    import: application-oauth.yml
