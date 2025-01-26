@@ -1,11 +1,14 @@
 package com.easy_p.easyp.service.member;
 
 import com.easy_p.easyp.dto.Auth2Login;
+import com.easy_p.easyp.entity.Member;
+import com.easy_p.easyp.repository.MemberRepository;
 import com.easy_p.easyp.service.MemberService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -17,18 +20,22 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     String clientId;
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
     String clientSecret;
+    private final MemberRepository memberRepository;
     ObjectMapper mapper = new ObjectMapper();
     @Override
     public Auth2Login authentication(Auth2Login auth2Login) {
         String code = auth2Login.getCode();
+        String memberEmail = null;
         String redirectUrl = auth2Login.getRedirectUrl();
         RestTemplate restTemplate = new RestTemplate();
         String decodedCode = URLDecoder.decode(code, StandardCharsets.UTF_8);
@@ -50,7 +57,8 @@ public class MemberServiceImpl implements MemberService {
             HttpEntity<String> eps = new HttpEntity<>(httpHeaders);
             ResponseEntity<String> exchange = restTemplate.exchange("https://www.googleapis.com/oauth2/v3/userinfo",
                     HttpMethod.GET, eps, String.class);
-            log.info("{}", exchange.getBody());
+            JsonNode jsonNode1 = mapper.readTree(exchange.getBody());
+            memberEmail = jsonNode1.get("email").asText();
         } catch (HttpClientErrorException e){
             if(e.getStatusCode() == HttpStatus.BAD_REQUEST){
                 throw new RuntimeException(e);
@@ -60,7 +68,13 @@ public class MemberServiceImpl implements MemberService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-        // 응답 처리
+        Optional<Member> optional = memberRepository.findByEmail(memberEmail);
+        if(optional.isEmpty()){
+            log.info("not found Member");
+        }
+        else{
+            log.info("jsonToken");
+        }
         return null;
     }
 

@@ -2,4 +2,4 @@ spring:
   application:
     name: easyP
   config:
-    import: application-oauth.yml
+    import: application-oauth.yml, application-security.yml
