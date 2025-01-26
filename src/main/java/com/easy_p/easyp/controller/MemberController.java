@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class MemberController {
     private final MemberService memberService;
-    @PostMapping("/auth2/login")
+    @PostMapping("/oauth2/login")
     public ResponseEntity<JwtToken> auth2Login(@RequestBody Auth2Login auth2Login){
         JwtToken authentication = memberService.authentication(auth2Login);
         return ResponseEntity.ok(authentication);
