@@ -1,5 +1,7 @@
 package com.easy_p.easyp.service.member;
 
+import com.easy_p.easyp.common.jwt.JwtProvider;
+import com.easy_p.easyp.common.jwt.JwtToken;
 import com.easy_p.easyp.dto.Auth2Login;
 import com.easy_p.easyp.entity.Member;
 import com.easy_p.easyp.repository.MemberRepository;
@@ -32,10 +34,12 @@ public class MemberServiceImpl implements MemberService {
     String clientSecret;
     private final MemberRepository memberRepository;
     ObjectMapper mapper = new ObjectMapper();
+    private final JwtProvider jwtProvider;
     @Override
-    public Auth2Login authentication(Auth2Login auth2Login) {
+    public JwtToken authentication(Auth2Login auth2Login) {
         String code = auth2Login.getCode();
         String memberEmail = null;
+        JwtToken jwtToken;
         String redirectUrl = auth2Login.getRedirectUrl();
         RestTemplate restTemplate = new RestTemplate();
         String decodedCode = URLDecoder.decode(code, StandardCharsets.UTF_8);
@@ -71,11 +75,12 @@ public class MemberServiceImpl implements MemberService {
         Optional<Member> optional = memberRepository.findByEmail(memberEmail);
         if(optional.isEmpty()){
             log.info("not found Member");
+            jwtToken = null;
         }
         else{
-            log.info("jsonToken");
+            jwtToken = jwtProvider.createToken(optional.get().getEmail());
         }
-        return null;
+        return jwtToken;
     }
 
     private LinkedMultiValueMap<String, String> createGoogleAuthRequestBody(String code, String clientId, String clientSecret,
