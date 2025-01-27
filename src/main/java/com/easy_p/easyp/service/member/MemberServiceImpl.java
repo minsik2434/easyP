@@ -1,10 +1,12 @@
 package com.easy_p.easyp.service.member;
 
+import com.easy_p.easyp.common.exception.NotFoundException;
 import com.easy_p.easyp.common.jwt.JwtProvider;
 import com.easy_p.easyp.common.jwt.JwtToken;
 import com.easy_p.easyp.common.oauth2.OAuth2AuthenticationManager;
 import com.easy_p.easyp.common.oauth2.dto.GoogleUserInfo;
 import com.easy_p.easyp.dto.Auth2Login;
+import com.easy_p.easyp.dto.MemberContext;
 import com.easy_p.easyp.entity.Member;
 import com.easy_p.easyp.repository.MemberRepository;
 import com.easy_p.easyp.service.MemberService;
@@ -17,7 +19,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.parameters.P;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -26,12 +33,13 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class MemberServiceImpl implements MemberService {
+public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
     String clientId;
     @Value("${spring.security.oauth2.client.registration.google.client-secret}")
@@ -57,5 +65,17 @@ public class MemberServiceImpl implements MemberService {
             jwtToken = jwtProvider.createToken(save.getEmail());
         }
         return jwtToken;
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Optional<Member> optional = memberRepository.findByEmail(email);
+        if(optional.isEmpty()){
+            throw new NotFoundException("Not Found Member");
+        }
+        Member member = optional.get();
+        List<GrantedAuthority> authorities =
+                List.of(new SimpleGrantedAuthority(optional.get().getRole()));
+        return new MemberContext(member, authorities);
     }
 }
