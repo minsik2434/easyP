@@ -40,7 +40,7 @@ public class GoogleOAuth2 {
     private String getGoogleAccessToken(String code, String redirectUrl) {
         HttpEntity<MultiValueMap<String, String>> googleAuthRequest = createGoogleAuthRequest(code, redirectUrl);
         ResponseEntity<String> authResponse = postGoogleOAuthToken(googleAuthRequest);
-        JsonNode jsonNode = null;
+        JsonNode jsonNode;
         try {
             jsonNode = mapper.readTree(authResponse.getBody());
         } catch (JsonProcessingException e) {
