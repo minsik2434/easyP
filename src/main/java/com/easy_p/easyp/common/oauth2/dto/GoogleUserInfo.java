@@ -7,9 +7,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class GoogleUserInfo {
+public class GoogleUserInfo implements UserInfo{
     private String sub;
     private String email;
     private String name;
     private String picture;
+
+    @Override
+    public String getProfile() {
+        return picture;
+    }
 }
