@@ -24,17 +24,40 @@ public abstract class AbstractOAuth2Provider implements OAuth2Provider{
         this.restTemplate = restTemplate;
     }
 
+    /*
+    템플릿 메서드 패턴 적용
+    유저 정보 조회 알고리즘 정의 후 fetchOAuth2AccessToken , fetchOAuth2UserInfo 메서드 하위 클래스에서 구현
+    1. 인증 서버에서 AuthCode 와 Redirect URL 을 전달해 AccessToken 을 발급
+    2. 발급받는 AccessToken 으로 유저 정보 서버에서 조회
+     */
     public final UserInfo getUserInfo(Auth2Login auth2Login){
         String code = URLDecoder.decode(auth2Login.getCode(), StandardCharsets.UTF_8);
         String redirectUrl = auth2Login.getRedirectUrl();
-
         String accessToken = fetchOAuth2AccessToken(code, redirectUrl);
         return fetchOAuth2UserInfo(accessToken);
     }
-
+    /**
+     * Auth Code 로 AccessToken 받아오는 추상 메서드
+     * @param code AuthCode
+     * @param redirectUrl AuthCode 를 받은 RedirectURL
+     * @return AccessToken(String)
+     */
     protected abstract String fetchOAuth2AccessToken(String code, String redirectUrl);
+
+    /**
+     * 발급받은 AccessToken 으로 유저 정보 조회
+     * @param accessToken 발급받은 AccessToken
+     * @return UserInfo 인터페이스 -> 유저 정보
+     */
     protected abstract UserInfo fetchOAuth2UserInfo(String accessToken);
 
+    /**
+     * RestTemplate 요청
+     * @param url 요청 URL
+     * @param method 메서드
+     * @param requestEntity 요청 바디
+     * @return ResponseEntity JSON 응답
+     */
     protected ResponseEntity<String> sendRequest(String url, HttpMethod method, HttpEntity<?> requestEntity){
         try{
             return restTemplate.exchange(url, method, requestEntity, String.class);
@@ -61,5 +84,4 @@ public abstract class AbstractOAuth2Provider implements OAuth2Provider{
         };
         return new OAuth2Exception(message, e);
     }
-
 }

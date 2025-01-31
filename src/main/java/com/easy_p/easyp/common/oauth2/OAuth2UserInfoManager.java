@@ -11,11 +11,11 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class OAuth2UserInfoProvider {
+public class OAuth2UserInfoManager {
+    // OAuth2Provider 인터페이스를 구현한 빈 조회
     private final List<OAuth2Provider> oAuth2Providers;
     public UserInfo getUserInfo(Auth2Login auth2Login){
         String type = auth2Login.getType();
-
         return oAuth2Providers.stream()
                 .filter(oAuth2Provider -> oAuth2Provider.supports(type))
                 .findFirst()
