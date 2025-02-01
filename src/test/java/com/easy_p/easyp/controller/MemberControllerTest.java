@@ -33,13 +33,12 @@ class MemberControllerTest {
 
     @Test
     void auth2LoginTest() throws Exception {
-        Auth2Login auth2Login = new Auth2Login("code", "type", "redirectUrl");
         JwtToken jwtToken = new JwtToken("AccessToken", "RefreshToken");
-        when(memberService.oauth2Login(any(Auth2Login.class))).thenReturn(jwtToken);
-        String content = mapper.writeValueAsString(auth2Login);
+        when(memberService.oauth2Login(any(String.class), any(String.class))).thenReturn(jwtToken);
+        String authCode = "TestCode";
         mockMvc.perform(post("/member/oauth2/login")
                 .contentType("application/json")
-                .content(content))
+                .content(authCode))
                 .andExpect(status().isOk());
     }
 }

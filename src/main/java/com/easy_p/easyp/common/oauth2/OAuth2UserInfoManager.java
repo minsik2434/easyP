@@ -7,6 +7,7 @@ import com.easy_p.easyp.dto.Auth2Login;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.net.URLDecoder;
 import java.util.List;
 
 @Component
@@ -14,13 +15,18 @@ import java.util.List;
 public class OAuth2UserInfoManager {
     // OAuth2Provider 인터페이스를 구현한 빈 조회
     private final List<OAuth2Provider> oAuth2Providers;
-    public UserInfo getUserInfo(Auth2Login auth2Login){
-        String type = auth2Login.getType();
+    public UserInfo getUserInfo(String authType, String authCode){;
         return oAuth2Providers.stream()
-                .filter(oAuth2Provider -> oAuth2Provider.supports(type))
+                .filter(oAuth2Provider -> oAuth2Provider.supports(authType))
                 .findFirst()
                 .orElseThrow(() -> new OAuth2Exception("UnSupported OAuth2"))
-                .getUserInfo(auth2Login);
-
+                .getUserInfo(authCode);
+    }
+    public String getAuthRequestUri(String authType){
+        return oAuth2Providers.stream()
+                .filter(oAuth2Provider -> oAuth2Provider.supports(authType))
+                .findFirst()
+                .orElseThrow(() -> new OAuth2Exception("UnSupported OAuth2"))
+                .getAuthRequestUrl();
     }
 }

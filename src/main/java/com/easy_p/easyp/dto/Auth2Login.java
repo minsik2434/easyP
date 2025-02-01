@@ -11,6 +11,4 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Auth2Login {
     private String code;
-    private String type;
-    private String redirectUrl;
 }

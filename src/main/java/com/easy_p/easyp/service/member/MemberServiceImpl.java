@@ -33,9 +33,9 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Transactional
     @Override
-    public JwtToken oauth2Login(Auth2Login auth2Login) {
+    public JwtToken oauth2Login(String authType, String authCode) {
         JwtToken jwtToken;
-        UserInfo userInfo = oAuth2UserInfoProvider.getUserInfo(auth2Login);
+        UserInfo userInfo = oAuth2UserInfoProvider.getUserInfo(authType, authCode);
         String email = userInfo.getEmail();
         Optional<Member> optional = memberRepository.findByEmail(email);
         if(optional.isPresent()) {
@@ -47,6 +47,11 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
             jwtToken = jwtProvider.createToken(save.getEmail());
         }
         return jwtToken;
+    }
+
+    @Override
+    public String oauthRequestUri(String authType) {
+        return oAuth2UserInfoProvider.getAuthRequestUri(authType);
     }
 
     @Override
