@@ -1,11 +1,17 @@
 package com.easy_p.easyp.common.exception;
 
+import lombok.Getter;
+
+@Getter
 public class OAuth2Exception extends RuntimeException{
-    public OAuth2Exception(String message, Throwable cause) {
+    private final int statusCode;
+    public OAuth2Exception(int statusCode, String message, Throwable cause) {
         super(message, cause);
+        this.statusCode = statusCode;
     }
 
-    public OAuth2Exception(String message) {
+    public OAuth2Exception(int statusCode, String message) {
         super(message);
+        this.statusCode = statusCode;
     }
 }

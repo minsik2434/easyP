@@ -3,9 +3,8 @@ package com.easy_p.easyp.service.member;
 import com.easy_p.easyp.common.exception.NotFoundException;
 import com.easy_p.easyp.common.jwt.JwtProvider;
 import com.easy_p.easyp.common.jwt.JwtToken;
-import com.easy_p.easyp.common.oauth2.OAuth2UserInfoManager;
+import com.easy_p.easyp.common.oauth2.OAuthManager;
 import com.easy_p.easyp.common.oauth2.dto.UserInfo;
-import com.easy_p.easyp.dto.Auth2Login;
 import com.easy_p.easyp.dto.MemberContext;
 import com.easy_p.easyp.entity.Member;
 import com.easy_p.easyp.repository.MemberRepository;
@@ -29,7 +28,7 @@ import java.util.Optional;
 public class MemberServiceImpl implements MemberService, UserDetailsService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
-    private final OAuth2UserInfoManager oAuth2UserInfoProvider;
+    private final OAuthManager oAuth2UserInfoProvider;
 
     @Transactional
     @Override

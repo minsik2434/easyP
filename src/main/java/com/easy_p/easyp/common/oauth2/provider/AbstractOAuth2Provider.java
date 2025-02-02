@@ -75,11 +75,11 @@ public abstract class AbstractOAuth2Provider implements OAuth2Provider{
     private OAuth2Exception handleOAuth2Exception(HttpClientErrorException e){
         int value = e.getStatusCode().value();
         String message = switch (value){
-            case 400 -> "OAuth2Exception: BadRequest";
-            case 401 -> "OAuth2Exception: Unauthorized";
-            case 403 -> "OAuth2Exception: Forbidden";
-            default -> "OAuth2Exception: ServerError";
+            case 400 -> "BadRequest";
+            case 401 -> "Unauthorized";
+            case 403 -> "Forbidden";
+            default -> "ServerError";
         };
-        return new OAuth2Exception(message, e);
+        return new OAuth2Exception(value, message, e);
     }
 }
