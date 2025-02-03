@@ -3,11 +3,9 @@ package com.easy_p.easyp.common.oauth2.provider;
 import com.easy_p.easyp.common.exception.JsonParsingException;
 import com.easy_p.easyp.common.exception.OAuth2Exception;
 import com.easy_p.easyp.common.oauth2.dto.UserInfo;
-import com.easy_p.easyp.dto.Auth2Login;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +15,11 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-public abstract class AbstractOAuth2Provider implements OAuth2Provider{
+public abstract class AbstractOAuth2Handler implements OAuth2Handler {
     protected final RestTemplate restTemplate;
     protected final ObjectMapper mapper = new ObjectMapper();
 
-    public AbstractOAuth2Provider(RestTemplate restTemplate) {
+    public AbstractOAuth2Handler(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
     /*

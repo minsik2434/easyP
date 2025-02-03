@@ -1,7 +1,7 @@
 package com.easy_p.easyp.config;
 
 import com.easy_p.easyp.common.jwt.JwtProvider;
-import com.easy_p.easyp.config.filter.JwtValidFilter;
+import com.easy_p.easyp.common.filter.JwtValidFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 login form 비활성화
                 .logout(AbstractHttpConfigurer::disable) // 기본 logout 비활성화
                 .authorizeHttpRequests((request) -> request
-                        .requestMatchers(HttpMethod.POST,"/member/oauth2/{authType}/login").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/member/oauth2/{authType}/login", "/member/refresh").permitAll()
                         .requestMatchers(HttpMethod.GET, "/member/oauth2/{authType}/requestUri").permitAll()
                         .anyRequest().authenticated()
                 )

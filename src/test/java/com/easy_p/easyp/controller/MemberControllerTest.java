@@ -1,7 +1,6 @@
 package com.easy_p.easyp.controller;
 
 import com.easy_p.easyp.common.jwt.JwtToken;
-import com.easy_p.easyp.dto.Auth2Login;
 import com.easy_p.easyp.service.MemberService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,7 +33,7 @@ class MemberControllerTest {
     @Test
     void auth2LoginTest() throws Exception {
         JwtToken jwtToken = new JwtToken("AccessToken", "RefreshToken");
-        when(memberService.oauth2Login(any(String.class), any(String.class))).thenReturn(jwtToken);
+        when(memberService.processOAuth2Login(any(String.class), any(String.class))).thenReturn(jwtToken);
         String authCode = "TestCode";
         mockMvc.perform(post("/member/oauth2/login")
                 .contentType("application/json")

@@ -31,13 +31,22 @@ public class JwtProvider {
         return new JwtToken(accessToken, refreshToken);
     }
 
-    public String getEmail(String token){
+    public String getSub(String token){
+        return Jwts.parserBuilder()
+                .setSigningKey(key).
+                build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
+
+    public String getClaim(String token, String claimKey){
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.get("email", String.class);
+        return claims.get(claimKey, String.class);
     }
 
     public boolean validateToken(String token){
@@ -60,7 +69,7 @@ public class JwtProvider {
 
     private String genAccessToken(String email, long now){
         return Jwts.builder()
-                .setSubject("AccessToken")
+                .setSubject("access-token")
                 .claim("email", email)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + accessTokenExpiration))
@@ -70,7 +79,7 @@ public class JwtProvider {
 
     private String genRefreshToken(String email, long now){
         return Jwts.builder()
-                .setSubject("RefreshToken")
+                .setSubject("refresh-token")
                 .claim("email", email)
                 .setIssuedAt(new Date(now))
                 .setExpiration(new Date(now + refreshTokenExpiration))
