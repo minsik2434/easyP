@@ -3,6 +3,7 @@ package com.easy_p.easyp.config;
 import com.easy_p.easyp.common.jwt.JwtProvider;
 import com.easy_p.easyp.common.filter.JwtValidFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.session.DefaultCookieSerializerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

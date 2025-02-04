@@ -40,3 +40,4 @@ out/
 src/main/resources/application-oauth.yml
 src/main/resources/application-dev.yml
 src/main/resources/application-security.yml
+src/main/resources/ssl.p12
