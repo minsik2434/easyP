@@ -2,7 +2,7 @@ package com.easy_p.easyp.common.advice;
 
 import com.easy_p.easyp.common.exception.OAuth2Exception;
 import com.easy_p.easyp.common.exception.UnSupportedHandlerException;
-import com.easy_p.easyp.dto.ExceptionResponse;
+import com.easy_p.easyp.dto.response.ExceptionResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

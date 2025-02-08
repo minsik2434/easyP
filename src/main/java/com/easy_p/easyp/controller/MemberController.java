@@ -2,9 +2,10 @@ package com.easy_p.easyp.controller;
 
 import com.easy_p.easyp.common.jwt.JwtToken;
 import com.easy_p.easyp.dto.Auth2Login;
+import com.easy_p.easyp.dto.UserAuthDto;
+import com.easy_p.easyp.dto.response.AuthResponse;
+import com.easy_p.easyp.dto.response.RefreshResponse;
 import com.easy_p.easyp.service.MemberService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +14,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
-
 @RestController
 @RequestMapping("/member")
 @RequiredArgsConstructor
@@ -22,19 +21,16 @@ import java.time.Duration;
 public class MemberController {
     private final MemberService memberService;
     @PostMapping("/oauth2/{authType}/login")
-    public ResponseEntity<JwtToken> oauth2Authenticate(@PathVariable("authType") String authType, @RequestBody Auth2Login auth2Login,
+    public ResponseEntity<AuthResponse> oauth2Authenticate(@PathVariable("authType") String authType, @RequestBody Auth2Login auth2Login,
                                                        HttpServletResponse response) {
-
-        JwtToken jwtToken = memberService.processOAuth2Login(authType, auth2Login.getCode());
-        String refreshToken = jwtToken.getRefreshToken();
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+        UserAuthDto userAuthDto = memberService.processOAuth2Login(authType, auth2Login.getCode());
+        AuthResponse authResponse = buildAuthResponse(userAuthDto);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", userAuthDto.getJwtToken().getRefreshToken())
                 .httpOnly(true)
-                .secure(false) // HTTPS에서만 전송되도록 설정
-                .sameSite("None") // SameSite 속성 설정
-                .path("/") // 전체 경로에 대해 쿠키가 사용될 수 있도록 설정
+                .path("/")
                 .build();
         response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.ok(jwtToken);
+        return ResponseEntity.ok(authResponse);
     }
 
     @GetMapping("/oauth2/{authType}/requestUri")
@@ -44,24 +40,33 @@ public class MemberController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<JwtToken> tokenRefresh(@RequestHeader("Authorization") String refreshToken){
-        String token = refreshToken.replace("Bearer ", "");
+    public ResponseEntity<RefreshResponse> tokenRefresh(@CookieValue("refreshToken") String token, HttpServletResponse response){
         JwtToken jwtToken = memberService.processTokenRefresh(token);
-        return ResponseEntity.ok(jwtToken);
+        RefreshResponse refreshResponse = buildRefreshResponse(jwtToken.getAccessToken());
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", jwtToken.getRefreshToken())
+                .httpOnly(true)
+                .path("/")
+                .build();
+
+        response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(refreshResponse);
     }
 
     @GetMapping("/test")
-    public String test(HttpServletRequest request){
-//        log.info("Cookie: {}", token);
-        Cookie[] cookies = request.getCookies();
-        for (Cookie cookie : cookies) {
-            if ("refreshToken".equals(cookie.getName())) {
-                // refreshToken 쿠키를 찾으면 그 값을 사용
-                String refreshToken = cookie.getValue();
-                // refreshToken을 검증하거나 사용
-                log.info("cookie value = {}", refreshToken);
-            }
-        }
+    public String test(){
         return "로그인 성공!!";
+    }
+
+    private AuthResponse buildAuthResponse(UserAuthDto userAuthDto){
+        return new AuthResponse(
+                userAuthDto.getEmail(),
+                userAuthDto.getName(),
+                userAuthDto.getProfile(),
+                userAuthDto.getRole(),
+                userAuthDto.getJwtToken().getAccessToken()
+        );
+    }
+    private RefreshResponse buildRefreshResponse(String accessToken){
+        return new RefreshResponse(accessToken);
     }
 }

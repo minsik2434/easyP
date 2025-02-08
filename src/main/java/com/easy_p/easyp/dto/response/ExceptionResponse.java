@@ -1,4 +1,4 @@
-package com.easy_p.easyp.dto;
+package com.easy_p.easyp.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

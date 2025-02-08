@@ -8,6 +8,7 @@ import com.easy_p.easyp.common.jwt.RefreshTokenStore;
 import com.easy_p.easyp.common.oauth2.OAuthManager;
 import com.easy_p.easyp.common.oauth2.dto.UserInfo;
 import com.easy_p.easyp.dto.MemberContext;
+import com.easy_p.easyp.dto.UserAuthDto;
 import com.easy_p.easyp.entity.Member;
 import com.easy_p.easyp.repository.MemberRepository;
 import com.easy_p.easyp.service.MemberService;
@@ -35,21 +36,24 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Transactional
     @Override
-    public JwtToken processOAuth2Login(String authType, String authCode) {
+    public UserAuthDto processOAuth2Login(String authType, String authCode) {
         JwtToken jwtToken;
+        UserAuthDto userAuthDto;
         UserInfo userInfo = oAuthManager.getUserInfo(authType, authCode);
         String email = userInfo.getEmail();
-        Optional<Member> optional = memberRepository.findByEmail(email);
-        if(optional.isPresent()) {
+        Optional<Member> optionalMember = memberRepository.findByEmail(email);
+        if(optionalMember.isPresent()) {
             jwtToken = jwtProvider.createToken(email);
+            userAuthDto = buildUserAuthDto(optionalMember.get(),jwtToken);
         }
         else{
             Member member = new Member(email, userInfo.getName(), "MEMBER", userInfo.getProfile());
             Member save = memberRepository.save(member);
             jwtToken = jwtProvider.createToken(save.getEmail());
+            userAuthDto = buildUserAuthDto(save, jwtToken);
         }
         refreshTokenStore.storeRefreshToken(email, jwtToken.getRefreshToken());
-        return jwtToken;
+        return userAuthDto;
     }
 
     @Override
@@ -59,6 +63,9 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Override
     public JwtToken processTokenRefresh(String refreshToken) {
+
+        jwtProvider.validateToken(refreshToken);
+
         String email = jwtProvider.getClaim(refreshToken, "email");
         String savedToken = refreshTokenStore.getRefreshToken(email);
         if(savedToken == null || !savedToken.equals(refreshToken)){
@@ -81,5 +88,15 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         List<GrantedAuthority> authorities =
                 List.of(new SimpleGrantedAuthority(optional.get().getRole()));
         return new MemberContext(member, authorities);
+    }
+
+    private UserAuthDto buildUserAuthDto(Member member, JwtToken jwtToken){
+        return new UserAuthDto(
+                member.getEmail(),
+                jwtToken,
+                member.getRole(),
+                member.getName(),
+                member.getProfile()
+        );
     }
 }
