@@ -1,5 +1,6 @@
 package com.easy_p.easyp.config;
 
+import com.easy_p.easyp.common.filter.JwtExceptionHandlerFilter;
 import com.easy_p.easyp.common.jwt.JwtProvider;
 import com.easy_p.easyp.common.filter.JwtValidFilter;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/member/oauth2/{authType}/requestUri").permitAll()
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtValidFilter(jwtProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtValidFilter(jwtProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtExceptionHandlerFilter(), JwtValidFilter.class);
         return http.build();
     }
     @Bean
