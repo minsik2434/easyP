@@ -6,7 +6,7 @@ import lombok.*;
 @Setter
 @Getter
 @AllArgsConstructor
-public class UserAuthDto {
+public class MemberAuthDto {
     private String email;
     private JwtToken jwtToken;
     private String role;

@@ -14,7 +14,7 @@ public class RefreshTokenStore {
     @Value("${jwt.refresh-token-expiration}")
     private int expiration;
     public void storeRefreshToken(String email, String refreshToken){
-        redisTemplate.opsForValue().set(email, refreshToken, expiration, TimeUnit.MICROSECONDS);
+        redisTemplate.opsForValue().set(email, refreshToken, expiration, TimeUnit.MILLISECONDS);
     }
 
     public String getRefreshToken(String email){

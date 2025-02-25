@@ -1,4 +1,4 @@
-package com.easy_p.easyp.dto;
+package com.easy_p.easyp.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
