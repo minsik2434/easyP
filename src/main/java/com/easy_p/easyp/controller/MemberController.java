@@ -77,9 +77,9 @@ public class MemberController {
     public ResponseEntity<PageDto> belongProject(@PathVariable("email") String email,
                                                  @PageableDefault(page = 0, size=10, sort="id"
                                                                        , direction = Sort.Direction.ASC) Pageable pageable,
+                                                 @RequestParam(value = "name", required = false) String name,
                                                  @AuthenticationPrincipal MemberContext memberContext){
         List<String> allowSortColumn = Arrays.asList("createAt", "updateAt", "id", "name");
-
         for(Sort.Order order : pageable.getSort()){
             if(!allowSortColumn.contains(order.getProperty())){
                 throw new BadRequestException(order.getProperty() + " is a sorting column that is not supported");
@@ -87,7 +87,7 @@ public class MemberController {
         }
 
         verifyingAccessRight(email, memberContext);
-        PageDto belongProject = memberService.getBelongProject(email, pageable);
+        PageDto belongProject = memberService.getBelongProject(email, name, pageable);
         return ResponseEntity.ok(belongProject);
     }
 
@@ -108,6 +108,14 @@ public class MemberController {
         Pageable pageable = PageRequest.of(page, size);
         PageDto bookmarkingProject = memberService.getBookmarkingProject(email, pageable);
         return ResponseEntity.ok(bookmarkingProject);
+    }
+
+    @DeleteMapping("/bookmark/{bookmarkId}")
+    public ResponseEntity<Void> bookmarkRemove(@PathVariable("bookmarkId") Long bookmarkId,
+                                               @AuthenticationPrincipal MemberContext memberContext){
+
+        memberService.deleteBookmark(memberContext.getUsername(), bookmarkId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/bookmark/sequence/update")

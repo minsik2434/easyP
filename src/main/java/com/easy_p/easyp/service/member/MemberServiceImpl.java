@@ -23,7 +23,6 @@ import com.easy_p.easyp.repository.ProjectRepository;
 import com.easy_p.easyp.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -101,8 +100,8 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageDto getBelongProject(String email, Pageable pageable) {
-        return projectRepository.findProjectListByEmail(email, pageable);
+    public PageDto getBelongProject(String email, String name, Pageable pageable) {
+        return projectRepository.findProjectListByEmail(email, name, pageable);
     }
 
     @Override
@@ -119,7 +118,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
             throw new BadRequestException("already existing");
         }
         int sequence = bookmarkRepository.countMemberBookmarkProject(email).intValue();
-        bookmarkRepository.save(new Bookmark(project, member , sequence+1));
+        bookmarkRepository.save(new Bookmark(project, member , sequence));
     }
 
     @Override
@@ -137,13 +136,22 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         }
 
        if(bookmark.getSequence() < changeSequence){
-            bookmarkRepository.decreaseBookmarkSequence(email, bookmark.getSequence(), changeSequence);
+            bookmarkRepository.decrementBookmarkSequenceInRange(email, bookmark.getSequence(), changeSequence);
             bookmark.setSequence(changeSequence);
        }
        else {
-           bookmarkRepository.increaseBookmarkSequence(email, bookmark.getSequence(), changeSequence);
+           bookmarkRepository.incrementBookmarkSequenceInRange(email, bookmark.getSequence(), changeSequence);
            bookmark.setSequence(changeSequence);
        }
+    }
+
+    @Override
+    @Transactional
+    //TODO 삭제하면서 시퀀스 변경도 수행해야함
+    public void deleteBookmark(String email, Long bookmarkId) {
+        Bookmark bookmark = bookmarkRepository.findById(bookmarkId).orElseThrow(() -> new NotFoundException("Not Found"));
+        bookmarkRepository.delete(bookmark);
+        bookmarkRepository.decreaseSequencesAfter(bookmark.getSequence(),email);
     }
 
 

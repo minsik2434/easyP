@@ -10,6 +10,7 @@ import com.easy_p.easyp.entity.QProject;
 import com.easy_p.easyp.entity.QProjectMember;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.core.types.dsl.Wildcard;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -37,7 +38,7 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
     }
 
     @Override
-    public PageDto findProjectListByEmail(String email, Pageable pageable) {
+    public PageDto findProjectListByEmail(String email, String name, Pageable pageable) {
         QProjectMember ownerProjectMember = new QProjectMember("ownerProjectMember");
         QMember owner = new QMember("owner");
         List<ProjectDto> content = queryFactory
@@ -57,7 +58,7 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
                 .join(projectMember.member, member)
                 .join(ownerProjectMember).on(ownerProjectMember.project.eq(project))
                 .join(ownerProjectMember.member, owner)
-                .where(member.email.eq(email), ownerProjectMember.role.eq("OWNER"))
+                .where(member.email.eq(email), ownerProjectMember.role.eq("OWNER") , containProjectName(name))
                 .orderBy(createOrderSpecifierForProject(pageable, project))
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize()).distinct().fetch();
@@ -66,7 +67,7 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
                 .from(projectMember)
                 .join(projectMember.project, project)
                 .join(projectMember.member, member)
-                .where(member.email.eq(email)).fetchOne();
+                .where(member.email.eq(email) , containProjectName(name)).fetchOne();
         long totalPage = totalCount / pageable.getPageSize();
         if (totalCount % pageable.getPageSize() > 0) {
             totalPage++;
@@ -85,5 +86,12 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
                 order.isAscending() ? Order.ASC : Order.DESC,
                 pathBuilder.getComparable(order.getProperty(), String.class)
         );
+    }
+
+    private BooleanExpression containProjectName(String name){
+        if(name == null){
+            return null;
+        }
+        return project.name.contains(name);
     }
 }

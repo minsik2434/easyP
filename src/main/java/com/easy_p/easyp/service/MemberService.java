@@ -12,8 +12,9 @@ public interface MemberService {
     String generateOAuth2AuthorizationUrl(String authType);
     JwtToken processTokenRefresh(String refreshToken);
     MemberInfo getMemberInfo(String email);
-    PageDto getBelongProject(String email, Pageable pageable);
+    PageDto getBelongProject(String email, String name, Pageable pageable);
     void saveBookmark(String email, Long projectId);
     PageDto getBookmarkingProject(String email, Pageable pageable);
     void updateBookmarkSequence(Long bookmarkId, Integer changeSequence, String email);
+    void deleteBookmark(String email, Long bookmarkId);
 }

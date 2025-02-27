@@ -23,9 +23,9 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> , Book
             "WHERE bm.sequence > :currentSequence " +
             "AND bm.sequence <= :changeSequence " +
             "AND bm.member.email = :email")
-    void decreaseBookmarkSequence(@Param("email") String email ,
-                                  @Param("currentSequence") Integer currentSequence,
-                                  @Param("changeSequence") Integer changeSequence);
+    void decrementBookmarkSequenceInRange(@Param("email") String email ,
+                                          @Param("currentSequence") Integer currentSequence,
+                                          @Param("changeSequence") Integer changeSequence);
 
     @Modifying
     @Query("UPDATE Bookmark bm " +
@@ -33,7 +33,14 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> , Book
             "WHERE bm.sequence < :currentSequence " +
             "AND bm.sequence >= :changeSequence " +
             "AND bm.member.email = :email")
-    void increaseBookmarkSequence(@Param("email") String email,
-                                  @Param("currentSequence") Integer currentSequence,
-                                  @Param("changeSequence") Integer changeSequence);
+    void incrementBookmarkSequenceInRange(@Param("email") String email,
+                                          @Param("currentSequence") Integer currentSequence,
+                                          @Param("changeSequence") Integer changeSequence);
+
+    @Modifying
+    @Query("UPDATE Bookmark bm " +
+            "SET bm.sequence = bm.sequence - 1 " +
+            "WHERE bm.sequence > :sequence " +
+            "AND bm.member.email = :email")
+    void decreaseSequencesAfter(@Param("sequence") Integer sequence, @Param("email") String email);
 }
