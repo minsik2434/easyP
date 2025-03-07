@@ -1,7 +1,6 @@
 package com.easy_p.easyp.dto.response;
 
 import com.easy_p.easyp.entity.Member;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 

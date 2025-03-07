@@ -4,10 +4,7 @@ import com.easy_p.easyp.dto.ProjectDto;
 import com.easy_p.easyp.dto.PageDto;
 import com.easy_p.easyp.dto.QProjectDto;
 import com.easy_p.easyp.dto.QProjectDto_Owner;
-import com.easy_p.easyp.entity.Project;
-import com.easy_p.easyp.entity.QMember;
-import com.easy_p.easyp.entity.QProject;
-import com.easy_p.easyp.entity.QProjectMember;
+import com.easy_p.easyp.entity.*;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -22,6 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static com.easy_p.easyp.entity.QBookmark.bookmark;
 import static com.easy_p.easyp.entity.QMember.member;
 import static com.easy_p.easyp.entity.QProject.project;
 import static com.easy_p.easyp.entity.QProjectMember.projectMember;
@@ -32,6 +30,7 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
     QProject qProject = project;
     QProjectMember qProjectMember = projectMember;
     QMember qMember = member;
+    QBookmark qBookmark = bookmark;
     private final JPAQueryFactory queryFactory;
     public ProjectQueryRepositoryImpl(EntityManager em){
         this.queryFactory = new JPAQueryFactory(em);
@@ -49,6 +48,8 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
                                 project.description,
                                 project.imageUrl,
                                 new QProjectDto_Owner(owner.email, owner.profile),
+                                bookmark.id.isNotNull(),
+                                bookmark.id,
                                 project.createAt,
                                 project.updateAt
                         )
@@ -58,6 +59,7 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
                 .join(projectMember.member, member)
                 .join(ownerProjectMember).on(ownerProjectMember.project.eq(project))
                 .join(ownerProjectMember.member, owner)
+                .leftJoin(bookmark).on(bookmark.project.eq(project).and(bookmark.member.eq(member)))
                 .where(member.email.eq(email), ownerProjectMember.role.eq("OWNER") , containProjectName(name))
                 .orderBy(createOrderSpecifierForProject(pageable, project))
                 .offset(pageable.getOffset())
@@ -73,6 +75,27 @@ public class ProjectQueryRepositoryImpl implements ProjectQueryRepository{
             totalPage++;
         }
         return new PageDto(content, pageable.getPageNumber(), totalPage, pageable.getPageSize(), totalCount);
+    }
+
+    @Override
+    public ProjectDto findProjectByProjectId(Long projectId) {
+        return queryFactory.select(
+                        new QProjectDto(
+                                projectMember.project.id,
+                                projectMember.project.name,
+                                projectMember.project.description,
+                                projectMember.project.imageUrl,
+                                new QProjectDto_Owner(member.email, member.profile),
+                                bookmark.id.isNotNull(),
+                                bookmark.id,
+                                projectMember.project.createAt,
+                                projectMember.project.updateAt))
+                .from(projectMember)
+                .join(projectMember.project, project)
+                .join(projectMember.member, member)
+                .leftJoin(bookmark).on(bookmark.project.eq(project).and(bookmark.member.eq(member)))
+                .where(projectMember.project.id.eq(projectId).and(projectMember.role.eq("OWNER")))
+                .fetchOne();
     }
 
     private OrderSpecifier<?> createOrderSpecifierForProject(Pageable pageable, QProject project){

@@ -73,6 +73,15 @@ public class MemberController {
         return ResponseEntity.ok(memberInfo);
     }
 
+    @GetMapping
+    public ResponseEntity<PageDto> members(@RequestParam(value = "email",defaultValue = "") String email,
+                                           @RequestParam(value = "page", defaultValue = "0") int page,
+                                           @RequestParam(value = "size",defaultValue = "10") int size){
+        Pageable pageable = PageRequest.of(page, size);
+        PageDto result = memberService.getMembersByEmail(email, pageable);
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/{email}/project")
     public ResponseEntity<PageDto> belongProject(@PathVariable("email") String email,
                                                  @PageableDefault(page = 0, size=10, sort="id"
@@ -126,6 +135,13 @@ public class MemberController {
                 memberContext.getUsername());
 
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/leave/{projectId}")
+    public ResponseEntity<Void> leaveProject(@PathVariable("projectId") Long projectId,
+                                             @AuthenticationPrincipal MemberContext context){
+        memberService.leaveProject(context.getUsername(), projectId);
+        return ResponseEntity.noContent().build();
     }
 
     private AuthResponse buildAuthResponse(MemberAuthDto memberAuthDto){

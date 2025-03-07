@@ -3,3 +3,5 @@ spring:
     name: easyP
   config:
     import: application-oauth.yml, application-security.yml
+
+image-server-base-url: http://localhost:10251

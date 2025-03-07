@@ -3,9 +3,11 @@ package com.easy_p.easyp.service.member;
 import com.easy_p.easyp.common.exception.BadRequestException;
 import com.easy_p.easyp.common.exception.JwtTokenException;
 import com.easy_p.easyp.common.exception.NotFoundException;
+import com.easy_p.easyp.common.exception.PermissionException;
+import com.easy_p.easyp.common.image.ImageManager;
 import com.easy_p.easyp.common.jwt.JwtProvider;
 import com.easy_p.easyp.common.jwt.JwtToken;
-import com.easy_p.easyp.common.jwt.RefreshTokenStore;
+import com.easy_p.easyp.common.store.RefreshTokenStore;
 import com.easy_p.easyp.common.oauth2.OAuthManager;
 import com.easy_p.easyp.common.oauth2.dto.UserInfo;
 import com.easy_p.easyp.dto.MemberContext;
@@ -23,6 +25,7 @@ import com.easy_p.easyp.repository.ProjectRepository;
 import com.easy_p.easyp.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -47,6 +50,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final ImageManager imageManager;
 
     @Transactional
     @Override
@@ -66,7 +70,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
             jwtToken = jwtProvider.createToken(save.getEmail());
             memberAuthDto = buildUserAuthDto(save, jwtToken);
         }
-        refreshTokenStore.storeRefreshToken(email, jwtToken.getRefreshToken());
+        refreshTokenStore.store(email, jwtToken.getRefreshToken());
         return memberAuthDto;
     }
 
@@ -81,12 +85,12 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
         jwtProvider.validateToken(refreshToken);
 
         String email = jwtProvider.getClaim(refreshToken, "email");
-        String savedToken = refreshTokenStore.getRefreshToken(email);
+        String savedToken = refreshTokenStore.get(email);
         if(savedToken == null || !savedToken.equals(refreshToken)){
             throw new JwtTokenException("Invalid Refresh Token");
         }
         JwtToken token = jwtProvider.createToken(email);
-        refreshTokenStore.storeRefreshToken(email, token.getRefreshToken());
+        refreshTokenStore.store(email, token.getRefreshToken());
         return token;
     }
 
@@ -109,7 +113,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     public void saveBookmark(String email, Long projectId) {
         Member member = memberRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("Not Found"));
         Project project = projectRepository.findById(projectId).orElseThrow(() -> new NotFoundException("Not Found"));
-        Optional<ProjectMember> belongProject = projectMemberRepository.findByProjectAndMember(project, member);
+        Optional<ProjectMember> belongProject = projectMemberRepository.findByMemberEmailAndProjectId(email, projectId);
         if(belongProject.isEmpty()){
             throw new NotFoundException("It's not a project you're involved in");
         }
@@ -125,6 +129,18 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     @Transactional(readOnly = true)
     public PageDto getBookmarkingProject(String email, Pageable pageable) {
         return bookmarkRepository.findBookmarkedProjectsByMemberEmail(email, pageable);
+    }
+
+    @Override
+    public PageDto getMembersByEmail(String email, Pageable pageable) {
+        Page<Member> pageMember = memberRepository.findAllByEmail(email, pageable);
+        List<MemberInfo> content = pageMember.getContent().stream().map(MemberInfo::new).toList();
+        return new PageDto(
+                content,pageable.getPageNumber(),
+                (long) pageMember.getTotalPages(),
+                pageable.getPageSize(),
+                pageMember.getTotalElements()
+        );
     }
 
     @Override
@@ -147,11 +163,44 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Override
     @Transactional
-    //TODO 삭제하면서 시퀀스 변경도 수행해야함
     public void deleteBookmark(String email, Long bookmarkId) {
         Bookmark bookmark = bookmarkRepository.findById(bookmarkId).orElseThrow(() -> new NotFoundException("Not Found"));
         bookmarkRepository.delete(bookmark);
         bookmarkRepository.decreaseSequencesAfter(bookmark.getSequence(),email);
+    }
+
+    @Override
+    @Transactional
+    //TODO OWNER 인데 다른 참여 회원이 있는 경우 떠나기 할 수 없도록 변경해야함 프로젝트의 OWNER는 한명뿐
+    public void leaveProject(String email, Long projectId) {
+        Project project = projectRepository.findById(projectId).orElseThrow(() -> new NotFoundException("Not Found"));
+        Member member = memberRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("Not Found"));
+        ProjectMember projectMember =
+                projectMemberRepository.findByMemberEmailAndProjectId(email, projectId).orElseThrow(() -> new NotFoundException("It's not a project you're involved in"));
+
+        if ("OWNER".equals(projectMember.getRole())) {
+            long participatingMemberCount  = projectMemberRepository.countByProject(project);
+            if(participatingMemberCount == 1){
+                removeBookmarkIfExist(member, project);
+                projectMemberRepository.delete(projectMember);
+                imageManager.deleteImage(project.getImageUrl());
+                projectRepository.delete(project);
+            }
+            else{
+                throw new BadRequestException("If there are other members, the owner cannot leave");
+            }
+        } else {
+            removeBookmarkIfExist(member, project);
+            projectMemberRepository.delete(projectMember);
+        }
+    }
+
+    @Override
+    public void verifyingParticipatingProject(String email, Long projectId) {
+        Optional<ProjectMember> projectMemberOptional = projectMemberRepository.findByMemberEmailAndProjectId(email, projectId);
+        if(projectMemberOptional.isEmpty()){
+            throw new PermissionException("Not belong to project");
+        }
     }
 
 
@@ -176,5 +225,15 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
                 member.getName(),
                 member.getProfile()
         );
+    }
+
+    private void removeBookmarkIfExist(Member member, Project project){
+        Optional<Bookmark> bookmarkOptional = bookmarkRepository.findByMemberAndProject(member, project);
+        if(bookmarkOptional.isPresent()){
+            Bookmark bookmark = bookmarkOptional.get();
+            int sequence = bookmark.getSequence();
+            bookmarkRepository.delete(bookmark);
+            bookmarkRepository.decreaseSequencesAfter(sequence, member.getEmail());
+        }
     }
 }

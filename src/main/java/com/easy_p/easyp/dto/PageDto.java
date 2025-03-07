@@ -10,7 +10,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 public class PageDto {
-    private List<?> projectDtoList;
+    private List<?> dtoList;
     private int currentPage;
     private Long totalPage;
     private int pageSize;

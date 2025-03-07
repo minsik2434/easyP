@@ -19,4 +19,10 @@ public class Project extends BaseEntity {
     private String name;
     private String description;
     private String imageUrl;
+
+    public Project(String name, String description, String imageUrl){
+        this.name = name;
+        this.description = description;
+        this.imageUrl = imageUrl;
+    }
 }

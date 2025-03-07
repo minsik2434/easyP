@@ -22,4 +22,10 @@ public class ProjectMember extends BaseEntity {
     @JoinColumn(name = "member_id")
     private Member member;
     private String role;
+
+    public ProjectMember(Project project, Member member, String role){
+        this.project = project;
+        this.member = member;
+        this.role = role;
+    }
 }

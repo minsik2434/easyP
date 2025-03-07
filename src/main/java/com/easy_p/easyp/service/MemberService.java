@@ -15,6 +15,9 @@ public interface MemberService {
     PageDto getBelongProject(String email, String name, Pageable pageable);
     void saveBookmark(String email, Long projectId);
     PageDto getBookmarkingProject(String email, Pageable pageable);
+    PageDto getMembersByEmail(String email, Pageable pageable);
     void updateBookmarkSequence(Long bookmarkId, Integer changeSequence, String email);
     void deleteBookmark(String email, Long bookmarkId);
+    void leaveProject(String email, Long projectId);
+    void verifyingParticipatingProject(String email, Long projectId);
 }

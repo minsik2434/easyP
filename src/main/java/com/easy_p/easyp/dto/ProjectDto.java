@@ -16,16 +16,28 @@ public class ProjectDto {
     private String description;
     private String imgUrl;
     private Owner owner;
+    private boolean isBookmarked;
+    private Long bookmarkId;
     private LocalDateTime createAt;
     private LocalDateTime updateAt;
 
     @QueryProjection
-    public ProjectDto(Long id, String name, String description, String imgUrl, Owner owner, LocalDateTime createAt, LocalDateTime updateAt){
+    public ProjectDto(Long id,
+                      String name,
+                      String description,
+                      String imgUrl,
+                      Owner owner,
+                      boolean isBookmarked,
+                      Long bookmarkId,
+                      LocalDateTime createAt,
+                      LocalDateTime updateAt){
         this.id = id;
         this.name = name;
         this.description = description;
         this.imgUrl = imgUrl;
         this.owner = owner;
+        this.isBookmarked = isBookmarked;
+        this.bookmarkId = bookmarkId;
         this.createAt = createAt;
         this.updateAt = updateAt;
     }
