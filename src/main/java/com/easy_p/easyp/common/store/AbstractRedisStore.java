@@ -21,4 +21,10 @@ public abstract class AbstractRedisStore implements RedisStore{
         String key = genKey(keyData);
         return redisTemplate.opsForValue().get(key);
     }
+
+    @Override
+    public void delete(String keyData) {
+        String key = genKey(keyData);
+        redisTemplate.opsForValue().getAndDelete(key);
+    }
 }

@@ -20,4 +20,7 @@ public interface MemberService {
     void deleteBookmark(String email, Long bookmarkId);
     void leaveProject(String email, Long projectId);
     void verifyingParticipatingProject(String email, Long projectId);
+    Long getNoReadNotificationCount(String email);
+    PageDto getNotifications(String email, String search, Pageable pageable);
+
 }

@@ -27,8 +27,15 @@ public class ControllerAdvice {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ExceptionResponse> badRequestExceptionHandler(BadRequestException ex){
         ExceptionResponse response =
-                buildExceptionResponse(HttpServletResponse.SC_BAD_REQUEST, "UnSupported", ex.getMessage());
+                buildExceptionResponse(HttpServletResponse.SC_BAD_REQUEST, "BadRequest", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(PermissionException.class)
+    public ResponseEntity<ExceptionResponse> permissionExceptionHandler(PermissionException ex){
+        ExceptionResponse response =
+                buildExceptionResponse(HttpServletResponse.SC_UNAUTHORIZED,"Permission Denied", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(JwtTokenException.class)

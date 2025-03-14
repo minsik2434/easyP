@@ -22,6 +22,9 @@ public class AlarmServiceImpl implements AlarmService {
     public void sendAlarm(String targetEmail, AlarmDto alarmDto) {
         Map<String, WebSocketSession> sessionMap = webSocketHandler.getSessionMap();
         WebSocketSession session = sessionMap.get(targetEmail);
+        if(session == null){
+            return;
+        }
         String jsonResponse;
         try{
             jsonResponse = mapper.writeValueAsString(alarmDto);

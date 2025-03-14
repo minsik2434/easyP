@@ -19,6 +19,11 @@ public class InviteCodeStore extends AbstractRedisStore{
         return super.get(key);
     }
 
+    public void delete(Long projectId, String inviteeEmail){
+        String key = projectId + "-" + inviteeEmail;
+        super.delete(key);
+    }
+
     @Override
     public String genKey(String keyData) {
         return "inviteCode:" + keyData;

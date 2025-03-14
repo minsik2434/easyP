@@ -21,6 +21,10 @@ public class RefreshTokenStore extends AbstractRedisStore{
         return super.get(email);
     }
 
+    public void delete(String email){
+        super.delete(email);
+    }
+
     @Override
     public String genKey(String keyData) {
         return "refresh:" + keyData;

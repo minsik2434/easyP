@@ -27,7 +27,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/member")
@@ -35,6 +37,7 @@ import java.util.List;
 @Slf4j
 public class MemberController {
     private final MemberService memberService;
+
     @PostMapping("/oauth2/{authType}/login")
     public ResponseEntity<AuthResponse> oauth2Authenticate(@PathVariable("authType") String authType, @RequestBody Auth2Login auth2Login,
                                                        HttpServletResponse response) {
@@ -46,6 +49,17 @@ public class MemberController {
                 .build();
         response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok(authResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response){
+        ResponseCookie expiredCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.setHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/oauth2/{authType}/requestUri")
@@ -142,6 +156,23 @@ public class MemberController {
                                              @AuthenticationPrincipal MemberContext context){
         memberService.leaveProject(context.getUsername(), projectId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/notifications/noRead/count")
+    public ResponseEntity<Map<String, Long>> noReadNotificationCount(@AuthenticationPrincipal MemberContext context){
+        Long noReadNotificationCount = memberService.getNoReadNotificationCount(context.getUsername());
+        return ResponseEntity.ok(Collections.singletonMap("count", noReadNotificationCount));
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<PageDto> notifications(@RequestParam("search") String search,
+                                           @RequestParam(value = "page", defaultValue = "0") int page,
+                                           @RequestParam(value = "size", defaultValue = "10") int size,
+                                           @AuthenticationPrincipal MemberContext memberContext){
+
+        Pageable pageable = PageRequest.of(page, size);
+        PageDto notifications = memberService.getNotifications(memberContext.getUsername(), search, pageable);
+        return ResponseEntity.ok(notifications);
     }
 
     private AuthResponse buildAuthResponse(MemberAuthDto memberAuthDto){

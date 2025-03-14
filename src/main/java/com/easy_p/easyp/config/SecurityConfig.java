@@ -36,8 +36,9 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 login form 비활성화
                 .logout(AbstractHttpConfigurer::disable) // 기본 logout 비활성화
                 .authorizeHttpRequests((request) -> request
-                        .requestMatchers(HttpMethod.POST,"/member/oauth2/{authType}/login", "/member/refresh").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/member/oauth2/{authType}/login", "/member/refresh", "/member/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/member/oauth2/{authType}/requestUri").permitAll()
+                        .requestMatchers("/ws/alarm/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtValidFilter(jwtProvider, userDetailsService), UsernamePasswordAuthenticationFilter.class)

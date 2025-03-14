@@ -18,10 +18,7 @@ import com.easy_p.easyp.entity.Bookmark;
 import com.easy_p.easyp.entity.Member;
 import com.easy_p.easyp.entity.Project;
 import com.easy_p.easyp.entity.ProjectMember;
-import com.easy_p.easyp.repository.BookmarkRepository;
-import com.easy_p.easyp.repository.MemberRepository;
-import com.easy_p.easyp.repository.ProjectMemberRepository;
-import com.easy_p.easyp.repository.ProjectRepository;
+import com.easy_p.easyp.repository.*;
 import com.easy_p.easyp.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +41,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService, UserDetailsService {
     private final MemberRepository memberRepository;
+    private final NotificationRepository notificationRepository;
     private final JwtProvider jwtProvider;
     private final OAuthManager oAuthManager;
     private final RefreshTokenStore refreshTokenStore;
@@ -81,9 +79,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Override
     public JwtToken processTokenRefresh(String refreshToken) {
-
         jwtProvider.validateToken(refreshToken);
-
         String email = jwtProvider.getClaim(refreshToken, "email");
         String savedToken = refreshTokenStore.get(email);
         if(savedToken == null || !savedToken.equals(refreshToken)){
@@ -132,6 +128,7 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageDto getMembersByEmail(String email, Pageable pageable) {
         Page<Member> pageMember = memberRepository.findAllByEmail(email, pageable);
         List<MemberInfo> content = pageMember.getContent().stream().map(MemberInfo::new).toList();
@@ -171,7 +168,6 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
 
     @Override
     @Transactional
-    //TODO OWNER 인데 다른 참여 회원이 있는 경우 떠나기 할 수 없도록 변경해야함 프로젝트의 OWNER는 한명뿐
     public void leaveProject(String email, Long projectId) {
         Project project = projectRepository.findById(projectId).orElseThrow(() -> new NotFoundException("Not Found"));
         Member member = memberRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("Not Found"));
@@ -196,11 +192,24 @@ public class MemberServiceImpl implements MemberService, UserDetailsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public void verifyingParticipatingProject(String email, Long projectId) {
         Optional<ProjectMember> projectMemberOptional = projectMemberRepository.findByMemberEmailAndProjectId(email, projectId);
         if(projectMemberOptional.isEmpty()){
             throw new PermissionException("Not belong to project");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Long getNoReadNotificationCount(String email) {
+        return notificationRepository.countNoReadNotificationByMemberEmail(email);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageDto getNotifications(String email, String search, Pageable pageable) {
+        return notificationRepository.findByMemberEmailAndSearch(email, search, pageable);
     }
 
 
